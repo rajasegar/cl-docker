@@ -63,9 +63,9 @@
 	"Delete a running container"
 	(run-cmd (cmd "rm ~A" container)))
 
-(defun run (image)
+(defun run (image &key name)
 	"Start a new container from an image"
-	(run-cmd (cmd "run ~A" image)))
+	(run-cmd (cmd "run ~A" image (if name "--name ~A" name))))
 
 (defun inspekt (container)
 	"Get detailed info about an object"
@@ -77,12 +77,12 @@
 
 (defun exec (container command &optional detach interactive tty)
 	"Run commands in a container"
-	(run-cmd (cond
-						 (detach (cmd "exec -d ~S ~S" container command))
-						 (interactive (cmd "exec -i ~S ~S" container command))
-						 (tty (cmd "exec -t ~S ~S" container command))
-						 (t (cmd "exec ~A ~A" container command))
-						 )))
+	(run-cmd (cmd "exec ~A ~A"
+								 container
+								 command
+								 (if detach "-d" "")
+								 (if interactive "-i" "")
+								 (if tty "-t" ""))))
 
 (defun start (container)
 	"Start a container"
