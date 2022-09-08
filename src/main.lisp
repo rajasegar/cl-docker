@@ -17,7 +17,8 @@
 	 :image-prune
 					 :build
 	 :diff
-	 :port))
+					 :port
+					 :run))
 (in-package :cl-docker)
 
 (defparameter *docker-program* "docker")
@@ -27,8 +28,10 @@
                (apply #'format (append (list nil command-format)
                                        args))))
 
-(defun run-cmd (command)
-	(uiop:run-program command :output :string))
+(defun run-cmd (command &key (dry nil))
+	(if dry
+			 command
+	(uiop:run-program command :output :string)))
 
 (defun ps (&optional all)
 	"Show a list of containers"
@@ -61,11 +64,19 @@
 
 (defun rm (container &optional f)
 	"Delete a running container"
-	(run-cmd (cmd "rm ~A" container)))
+	(run-cmd (cmd "rm ~A" container (if f "-f" ""))))
 
-(defun run (image &key name)
+(defun run (image &key publish-all rm interactive (tty nil tty-supplied-p) detach name publish)
 	"Start a new container from an image"
-	(run-cmd (cmd "run ~A" image (if name "--name ~A" name))))
+	(run-cmd (cmd "run ~A ~A ~A ~A ~A ~A ~A ~A"
+								image
+								(if name (format nil "--name ~A" name) "")
+								(if publish (format nil "-p ~A" publish) "")
+								(if publish-all "-P" "")
+								(if rm "--rm" "")
+								(if interactive "-i" "")
+								(if tty "-t" "")
+								(if detach "-d" "")) :dry t))
 
 (defun inspekt (container)
 	"Get detailed info about an object"
