@@ -5,6 +5,8 @@
 
 Run your docker commands from your favorite Common Lisp REPLs
 
+![Screenshot](/screenshot.png)
+
 
 ## Installation
 ```lisp
@@ -14,12 +16,19 @@ Run your docker commands from your favorite Common Lisp REPLs
 ## Usage
 
 ```lisp
-(ql:quickload :cl-docker)
-;; List all runnning containers
-(docker:ps)
-;; List all containers
+;; List all docker containers
 (docker:ps :a)
 ```
+
+### Output:
+```
+"CONTAINER ID   IMAGE               COMMAND                  CREATED         STATUS                    PORTS     NAMES
+673b20976166   docker101tutorial   \"/docker-entrypoint.…\"   19 months ago   Exited (0) 16 hours ago             docker-tutorial
+"
+NIL
+0
+```
+
 
 This package uses `uiop:run-program` to run docker commands in the REPL
 
