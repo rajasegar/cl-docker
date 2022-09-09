@@ -2,23 +2,25 @@
 	(:nicknames :docker)
   (:use :cl)
 	(:export :ps
-	 :images
-					 :stats
-	 :version
-					 :rm
-	 :inspekt
-					 :pull
-	 :exec
-					 :start
-	 :stop
-					 :cp
-	 :rename
-					 :commit
-	 :image-prune
-					 :build
-	 :diff
-					 :port
-					 :run))
+						:images
+						:stats
+						:version
+						:rm
+						:inspekt
+						:pull
+						:exec
+						:start
+						:stop
+						:cp
+						:rename
+						:commit
+						:image-prune
+						:build
+						:diff
+						:port
+						:run
+						:save
+						:load))
 (in-package :cl-docker)
 
 (defparameter *docker-program* "docker")
@@ -40,6 +42,7 @@
 							 (cmd "ps"))))
 
 (defun images ()
+	"Show a list of all images"
 	(run-cmd (cmd "images")))
 
 (defun image-prune (&optional a)
@@ -56,27 +59,37 @@
 	"Tag an image"
 	(run-cmd (cmd "tag ~A ~A" image tag)))
 
+(defun save (image file)
+	"Save an image to file"
+	(run-cmd (cmd "save ~A > ~A" image file)))
+
+(defun load (file)
+	"Load an image from a file"
+	(run-cmd (cmd "load -i ~A" file)))
+
 (defun stats ()
+	"Show stats of running containers"
 	(run-cmd (cmd "stats")))
 
 (defun version ()
+	"Show installed docker version"
 	(run-cmd (cmd "version")))
 
 (defun rm (container &optional f)
 	"Delete a running container"
 	(run-cmd (cmd "rm ~A" container (if f "-f" ""))))
 
-(defun run (image &key publish-all rm interactive (tty nil tty-supplied-p) detach name publish)
+(defun run (image &key publish-all rm interactive tty detach name publish)
 	"Start a new container from an image"
 	(run-cmd (cmd "run ~A ~A ~A ~A ~A ~A ~A ~A"
-								image
-								(if name (format nil "--name ~A" name) "")
-								(if publish (format nil "-p ~A" publish) "")
-								(if publish-all "-P" "")
-								(if rm "--rm" "")
 								(if interactive "-i" "")
 								(if tty "-t" "")
-								(if detach "-d" "")) :dry t))
+								(if rm "--rm" "")
+								(if publish (format nil "-p ~S" publish) "")
+								(if name (format nil "--name ~A" name) "")
+								(if publish-all "-P" "")
+								(if detach "-d" "")
+								image) :dry t))
 
 (defun inspekt (container)
 	"Get detailed info about an object"
