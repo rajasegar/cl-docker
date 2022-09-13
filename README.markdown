@@ -29,6 +29,15 @@ NIL
 0
 ```
 
+## Commands Reference
+|   **docker command**   |       **cl-docker**      |
+|:----------------------:|:------------------------:|
+| docker ps -a           | (docker:ps :a)           |
+| docker images          | (docker:images)          |
+| docker build DIRECTORY | (docker:build "myimage") |
+| docker rm CONTAINER    | (docker:rm "web")        |
+| docker start CONTAINER | (docker:start "web")     |
+| docker stop CONTAINER  | (docker:stop "web")      |
 
 This package uses `uiop:run-program` to run docker commands in the REPL
 

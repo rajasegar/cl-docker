@@ -1,26 +1,26 @@
 (defpackage cl-docker
 	(:nicknames :docker)
   (:use :cl)
-	(:export :ps
-						:images
-						:stats
-						:version
-						:rm
-						:inspekt
-						:pull
-						:exec
-						:start
-						:stop
-						:cp
-						:rename
+	(:export  :build
 						:commit
-						:image-prune
-						:build
+						:cp
 						:diff
+						:exec
+						:image-prune
+						:images
+						:inspekt
+						:load
 						:port
+						:ps
+						:pull
+						:rename
+						:rm
 						:run
 						:save
-						:load))
+						:start
+						:stats
+						:stop
+						:version))
 (in-package :cl-docker)
 
 (defparameter *docker-program* "docker")
