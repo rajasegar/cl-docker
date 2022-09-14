@@ -1,8 +1,8 @@
 (defsystem "cl-docker"
-  :version "0.1.0"
+  :version "0.2.0"
   :author "Rajasegar Chandran"
   :license "MIT"
-  :depends-on ()
+  :depends-on ("dexador" "yason" "flexi-streams" "drakma" "cl-ppcre")
   :components ((:module "src"
                 :components
                 ((:file "main"))))
