@@ -5,7 +5,8 @@
   :depends-on ("dexador" "yason" "flexi-streams" "drakma" "cl-ppcre")
   :components ((:module "src"
                 :components
-                ((:file "main"))))
+                ((:file "utils")
+								 (:file "main" :depends-on ("utils")))))
   :description ""
   :in-order-to ((test-op (test-op "cl-docker/tests"))))
 

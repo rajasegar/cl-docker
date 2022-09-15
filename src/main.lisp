@@ -1,6 +1,7 @@
 (defpackage cl-docker
 	(:nicknames :docker)
-  (:use :cl)
+  (:use :cl
+				:cl-docker.utils)
 	(:export  :build
 						:commit
 						:cp
@@ -24,57 +25,7 @@
 (in-package :cl-docker)
 
 (defparameter *docker-program* "docker")
-(defconstant +CELL-FORMATS+ '(:left   "~vA"
-                              :center "~v:@<~A~>"
-                              :right  "~v@A"))
 
-;; (defconstant +IMAGES+
-;; 	'(("minimum_app" "latest" "2342342342" "6 days ago" "784MB")
-;; 		("my-sbcl-app" "latest" "2342342342" "7 days ago" "874MB")))
-
-(defun format-table (stream data &key (column-label (loop for i from 1 to (length (car data))
-                                                          collect (format nil "COL~D" i)))
-                                      (column-align (loop for i from 1 to (length (car data))
-                                                          collect :left)))
-    (let* ((col-count (length column-label))
-           (strtable  (cons column-label ; table header
-                          (loop for row in data ; table body with all cells as strings
-                              collect (loop for cell in row
-                                           collect (if (stringp cell)
-                                                        cell
-                                                    ;else
-                                                        (format nil "~A" cell))))))
-           (col-widths (loop with widths = (make-array col-count :initial-element 0)
-                           for row in strtable
-                           do (loop for cell in row
-                                    for i from 0
-                                  do (setf (aref widths i)
-                                         (max (aref widths i) (length cell))))
-                           finally (return widths))))
-        ;------------------------------------------------------------------------------------
-        ; splice in the header separator
-        (setq strtable
-              (nconc (list (car strtable) ; table header
-                           (loop for align in column-align ; generate separator
-                                 for width across col-widths
-                               collect (case align
-                                           (:left   (format nil ":~v@{~A~:*~}"
-                                                        (1- width)  "-"))
-                                           (:right  (format nil "~v@{~A~:*~}:"
-                                                        (1- width)  "-"))
-                                           (:center (format nil ":~v@{~A~:*~}:"
-                                                        (- width 2) "-")))))
-                           (cdr strtable))) ; table body
-        ;------------------------------------------------------------------------------------
-        ; Generate the formatted table
-        (let ((row-fmt (format nil "| ~{~A~^ | ~} |~~%" ; compile the row format
-                           (loop for align in column-align
-                               collect (getf +CELL-FORMATS+ align))))
-              (widths  (loop for w across col-widths collect w)))
-            ; write each line to the given stream
-            (dolist (row strtable)
-                (apply #'format stream row-fmt (mapcan #'list widths row)))))
-)
 
 (defun cmd (command-format &rest args)
   (concatenate 'string *docker-program* " "
@@ -117,31 +68,23 @@
 			(decode-universal-time time)
 		(format nil "Created ~d months ~d days ago" month day)))
 
-(defun format-size (size)
-	(multiple-value-bind (q r)
-			(ceiling size (* 1000 1000))
-		(if (> q 999)
-				(multiple-value-bind (q1 r1) (floor q 1000) (format nil "~dGB" q1))
-				(format nil "~dMB" q))))
-
-(defun images ()
+(defun images (&key api)
 	"Show a list of all images"
-	;; (run-cmd (cmd "images"))
+	(if api
+			(docker-api "/images/json")
+			(format-table t 
+										(loop for image in (docker-api "/images/json")
+													for repo-tags = (cl-ppcre:split ":" (car (assoc-cdr "RepoTags" image)))
+													for repo = (car repo-tags)
+													for tag = (car (cdr repo-tags))
+													for id = (assoc-cdr "Id" image)
+													for size = (file-size-human-readable (assoc-cdr "Size" image))
+													for created = (get-created (assoc-cdr "Created" image))
 
-	(format-table t 
-	(loop for image in (docker-api "/images/json")
-				for repo-tags = (cl-ppcre:split ":" (car (assoc-cdr "RepoTags" image)))
-				for repo = (car repo-tags)
-				for tag = (car (cdr repo-tags))
-				for id = (assoc-cdr "Id" image)
-				for size = (format-size (assoc-cdr "Size" image))
-				for created = (get-created (assoc-cdr "Created" image))
-
-				collect `(,repo ,tag "xxxxxxxx" ,created ,size)
-				)
-								:column-label '("REPOSITORY" "TAG" "IMAGE ID" "CREATED" "SIZE")
-								:column-align '(:left :left :left :left :left))
-	)
+													collect `(,repo ,tag "xxxxxxxx" ,created ,size))
+										:column-label '("REPOSITORY" "TAG" "IMAGE ID" "CREATED" "SIZE")
+										:column-align '(:left :left :left :left :left))
+			))
 
 (defun image-prune (&optional a)
 	"Delete dangling images"
