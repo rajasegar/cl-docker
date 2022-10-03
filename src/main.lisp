@@ -37,36 +37,18 @@
 			 command
 	(uiop:run-program command :output :string)))
 
-(defun docker-url (url)
-	"Get complete url of the API endpoint"
-	(concatenate 'string "http://localhost/v1.41" url))
 
-(defun docker-api (url)
-	(let ((socket (make-instance 'sb-bsd-sockets:local-socket :type :stream)))
-		(sb-bsd-sockets:socket-connect socket "/var/run/docker.sock")
-		(let ((stream (sb-bsd-sockets:socket-make-stream socket
-																										 :element-type '(unsigned-byte 8)
-																										 :input t
-																										 :output t
-																										 :buffering :none)))
-			(let ((wrapped-stream (flexi-streams:make-flexi-stream (drakma::make-chunked-stream stream)
-																														 :external-format :utf-8)))
-				(yason:parse (dex:get (docker-url url) :stream wrapped-stream :want-stream t) :object-as :alist)))))
+;; (defun ps (&optional all)
+;; 	"Show a list of containers"
+;; 	(run-cmd (if all
+;; 							 (cmd "ps -a")
+;; 							 (cmd "ps"))))
 
 (defun ps (&optional all)
 	"Show a list of containers"
-	(run-cmd (if all
-							 (cmd "ps -a")
-							 (cmd "ps"))))
-
-(defun assoc-cdr (prop list)
-	(cdr (assoc prop list :test #'string=)))
-
-(defun get-created (time)
-	(multiple-value-bind
-				(second minute hour day month year day-of-week dst-p tz)
-			(decode-universal-time time)
-		(format nil "Created ~d months ~d days ago" month day)))
+	(if all
+			(docker-api "/containers/json?all=true")
+			(docker-api "/containers/json")))
 
 (defun images (&key api)
 	"Show a list of all images"

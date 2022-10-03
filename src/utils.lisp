@@ -1,9 +1,29 @@
 (defpackage :cl-docker.utils
 	(:use :cl)
 	(:export :file-size-human-readable
-					:format-table))
+	 :format-table
+					 :docker-api
+	 :assoc-cdr
+	 :get-created))
 
 (in-package :cl-docker.utils)
+
+(defun docker-url (url)
+	"Get complete url of the API endpoint"
+	(concatenate 'string "http://localhost/v1.41" url))
+
+(defun docker-api (url)
+	(let ((socket (make-instance 'sb-bsd-sockets:local-socket :type :stream)))
+		(sb-bsd-sockets:socket-connect socket "/var/run/docker.sock")
+		(let ((stream (sb-bsd-sockets:socket-make-stream socket
+																										 :element-type '(unsigned-byte 8)
+																										 :input t
+																										 :output t
+																										 :buffering :none)))
+			(let ((wrapped-stream (flexi-streams:make-flexi-stream (drakma::make-chunked-stream stream)
+																														 :external-format :utf-8)))
+				(yason:parse (dex:get (docker-url url) :stream wrapped-stream :want-stream t) :object-as :alist)))))
+
 
 (defvar *CELL-FORMATS* '(:left   "~vA"
                               :center "~v:@<~A~>"
@@ -93,3 +113,12 @@ Optional second argument FLAVOR controls the units and the display format:
               ((eq flavor 'iec) "iB")
               (t "")))))
 
+
+(defun assoc-cdr (prop list)
+	(cdr (assoc prop list :test #'string=)))
+
+(defun get-created (time)
+	(multiple-value-bind
+				(second minute hour day month year day-of-week dst-p tz)
+			(decode-universal-time time)
+		(format nil "Created ~d months ~d days ago" month day)))
