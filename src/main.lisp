@@ -80,11 +80,9 @@
 													for id = (assoc-cdr "Id" image)
 													for size = (file-size-human-readable (assoc-cdr "Size" image))
 													for created = (get-created (assoc-cdr "Created" image))
-
 													collect `(,repo ,tag "xxxxxxxx" ,created ,size))
 										:column-label '("REPOSITORY" "TAG" "IMAGE ID" "CREATED" "SIZE")
-										:column-align '(:left :left :left :left :left))
-			))
+										:column-align '(:left :left :left :left :left))))
 
 (defun image-prune (&optional a)
 	"Delete dangling images"
